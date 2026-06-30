@@ -27,7 +27,7 @@ public class ReturnController {
 
     @RequestMapping(method = RequestMethod.GET)
     public String viewReturnPage() {
-        return "admin/return-product"; 
+        return "admin/return-product";
     }
 
     @RequestMapping(value = "/search", method = RequestMethod.GET)
@@ -53,23 +53,28 @@ public class ReturnController {
     // Xử lý Thu hồi - Đổi trả có KÈM HÌNH ẢNH (Giữ nguyên vẹn 100% code của bạn)
     @RequestMapping(value = "/submit", method = RequestMethod.POST)
     public String submitReturn(HttpServletRequest request, Model model) {
-        String orderId = request.getParameter("orderId");
-        String[] productIds = request.getParameterValues("productId");
-        
-        // Ép kiểu request về Multipart để xử lý file ảnh
-        MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
-        
-        // Đường dẫn thư mục lưu ảnh trong dự án của bạn (Tomcat Server)
-        String uploadDir = request.getServletContext().getRealPath("/") + "assets/images/returns/";
-        
         try {
+            String orderId = request.getParameter("orderId");
+            String[] productIds = request.getParameterValues("productId");
+
+            if (!(request instanceof MultipartHttpServletRequest)) {
+                model.addAttribute("error", "Request không hợp lệ hoặc thiếu dữ liệu upload.");
+                return "admin/return-product";
+            }
+
+            // Ép kiểu request về Multipart để xử lý file ảnh
+            MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
+
+            // Đường dẫn thư mục lưu ảnh trong dự án của bạn (Tomcat Server)
+            String uploadDir = request.getServletContext().getRealPath("/") + "assets/images/returns/";
+
             if (productIds != null) {
                 for (int i = 0; i < productIds.length; i++) {
                     String productId = productIds[i];
                     String returnQtyStr = request.getParameter("returnQuantity_" + productId);
                     String returnType = request.getParameter("returnType_" + productId);
                     String reason = request.getParameter("reason_" + productId);
-                    
+
                     // Hứng file ảnh theo tên của từng sản phẩm
                     MultipartFile imageFile = multipartRequest.getFile("image_" + productId);
                     String imageName = null;
@@ -82,11 +87,11 @@ public class ReturnController {
                             // Tạo thư mục lưu nếu chưa tồn tại
                             File dir = new File(uploadDir);
                             if (!dir.exists()) dir.mkdirs();
-                            
+
                             // Đổi tên file thành chuỗi ngẫu nhiên tránh trùng lặp file trùng tên
                             imageName = UUID.randomUUID().toString() + "_" + imageFile.getOriginalFilename();
                             File serverFile = new File(dir.getAbsolutePath() + File.separator + imageName);
-                            
+
                             // Lưu file xuống ổ cứng server
                             imageFile.transferTo(serverFile);
                         }
@@ -104,6 +109,8 @@ public class ReturnController {
                 }
                 model.addAttribute("success", "Đã tiếp nhận yêu cầu thu hồi đổi trả kèm hình ảnh minh chứng thành công!");
             }
+        } catch (NumberFormatException e) {
+            model.addAttribute("error", "Số lượng đổi trả không hợp lệ.");
         } catch (Exception e) {
             model.addAttribute("error", "Xử lý thất bại: " + e.getLocalizedMessage());
         }

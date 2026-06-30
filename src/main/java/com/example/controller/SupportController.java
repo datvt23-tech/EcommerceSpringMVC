@@ -19,7 +19,11 @@ public class SupportController {
     private SupportTicketDAO supportTicketDAO;
 
     private User getLoggedInUser(HttpSession session) {
-        return (User) session.getAttribute("LOGIN_USER");
+        try {
+            return (User) session.getAttribute("LOGIN_USER");
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private boolean hasRole(HttpSession session, String role) {
@@ -42,17 +46,23 @@ public class SupportController {
 
     @GetMapping("/support")
     public String support(HttpSession session, Model model) {
-        User user = getLoggedInUser(session);
-        if (user == null) {
-            return "redirect:/login";
-        }
-        if (canOperate(session)) {
-            return "redirect:/staff/support";
-        }
+        try {
+            User user = getLoggedInUser(session);
+            if (user == null) {
+                return "redirect:/login";
+            }
+            if (canOperate(session)) {
+                return "redirect:/staff/support";
+            }
 
-        model.addAttribute("tickets", supportTicketDAO.getTicketsByUserId(user.getId()));
-        model.addAttribute("body", "/customer/support.jsp");
-        return "layout/main";
+            model.addAttribute("tickets", supportTicketDAO.getTicketsByUserId(user.getId()));
+            model.addAttribute("body", "/customer/support.jsp");
+            return "layout/main";
+        } catch (Exception e) {
+            model.addAttribute("error", "Không thể tải trang hỗ trợ.");
+            model.addAttribute("body", "/customer/support.jsp");
+            return "layout/main";
+        }
     }
 
     @PostMapping("/support/create")
@@ -60,35 +70,46 @@ public class SupportController {
             @RequestParam("message") String message,
             HttpSession session,
             Model model) {
-        User user = getLoggedInUser(session);
-        if (user == null) {
-            return "redirect:/login";
-        }
-        if (canOperate(session)) {
-            return "redirect:/staff/support";
-        }
+        try {
+            User user = getLoggedInUser(session);
+            if (user == null) {
+                return "redirect:/login";
+            }
+            if (canOperate(session)) {
+                return "redirect:/staff/support";
+            }
 
-        String customerName = user.getFullName() != null && !user.getFullName().isEmpty()
-                ? user.getFullName()
-                : user.getUsername();
-        if (supportTicketDAO.createTicket(user.getId(), customerName, subject, message)) {
-            model.addAttribute("success", "Đã gửi yêu cầu hỗ trợ.");
-        } else {
-            model.addAttribute("error", "Không thể gửi yêu cầu hỗ trợ.");
+            String customerName = user.getFullName() != null && !user.getFullName().isEmpty()
+                    ? user.getFullName()
+                    : user.getUsername();
+            if (supportTicketDAO.createTicket(user.getId(), customerName, subject, message)) {
+                model.addAttribute("success", "Đã gửi yêu cầu hỗ trợ.");
+            } else {
+                model.addAttribute("error", "Không thể gửi yêu cầu hỗ trợ.");
+            }
+        } catch (Exception e) {
+            model.addAttribute("error", "Đã xảy ra lỗi khi gửi yêu cầu hỗ trợ.");
         }
         return support(session, model);
     }
 
     @GetMapping("/staff/support")
     public String staffSupport(HttpSession session, Model model) {
-        if (!canOperate(session)) {
-            return getLoggedInUser(session) == null ? "redirect:/login" : "redirect:/";
-        }
+        try {
+            if (!canOperate(session)) {
+                return getLoggedInUser(session) == null ? "redirect:/login" : "redirect:/";
+            }
 
-        model.addAttribute("tickets", supportTicketDAO.getAllTickets());
-        model.addAttribute("statuses", TICKET_STATUSES);
-        model.addAttribute("body", "/staff/support.jsp");
-        return "staff/layout/main";
+            model.addAttribute("tickets", supportTicketDAO.getAllTickets());
+            model.addAttribute("statuses", TICKET_STATUSES);
+            model.addAttribute("body", "/staff/support.jsp");
+            return "staff/layout/main";
+        } catch (Exception e) {
+            model.addAttribute("error", "Không thể tải danh sách hỗ trợ.");
+            model.addAttribute("statuses", TICKET_STATUSES);
+            model.addAttribute("body", "/staff/support.jsp");
+            return "staff/layout/main";
+        }
     }
 
     @PostMapping("/staff/support/update")
@@ -97,30 +118,43 @@ public class SupportController {
             @RequestParam("reply") String reply,
             HttpSession session,
             Model model) {
-        if (!canOperate(session)) {
-            return getLoggedInUser(session) == null ? "redirect:/login" : "redirect:/";
-        }
-        if (!isAllowedStatus(status)) {
-            model.addAttribute("error", "Trạng thái hỗ trợ không hợp lệ.");
+        try {
+            if (!canOperate(session)) {
+                return getLoggedInUser(session) == null ? "redirect:/login" : "redirect:/";
+            }
+            if (!isAllowedStatus(status)) {
+                model.addAttribute("error", "Trạng thái hỗ trợ không hợp lệ.");
+                return staffSupport(session, model);
+            }
+
+            if (supportTicketDAO.updateTicket(id, status, reply)) {
+                model.addAttribute("success", "Cập nhật yêu cầu hỗ trợ thành công.");
+            } else {
+                model.addAttribute("error", "Không thể cập nhật yêu cầu hỗ trợ.");
+            }
+            return staffSupport(session, model);
+        } catch (Exception e) {
+            model.addAttribute("error", "Đã xảy ra lỗi khi cập nhật yêu cầu hỗ trợ.");
             return staffSupport(session, model);
         }
-
-        if (supportTicketDAO.updateTicket(id, status, reply)) {
-            model.addAttribute("success", "Cập nhật yêu cầu hỗ trợ thành công.");
-        } else {
-            model.addAttribute("error", "Không thể cập nhật yêu cầu hỗ trợ.");
-        }
-        return staffSupport(session, model);
     }
+
     @GetMapping("/admin/support")
     public String adminSupport(HttpSession session, Model model) {
-        if (!canOperate(session)) {
-            return getLoggedInUser(session) == null ? "redirect:/login" : "redirect:/";
-        }
+        try {
+            if (!canOperate(session)) {
+                return getLoggedInUser(session) == null ? "redirect:/login" : "redirect:/";
+            }
 
-        model.addAttribute("tickets", supportTicketDAO.getAllTickets());
-        model.addAttribute("statuses", TICKET_STATUSES);
-        model.addAttribute("body", "/admin/support.jsp");
-        return "admin/layout/main";
+            model.addAttribute("tickets", supportTicketDAO.getAllTickets());
+            model.addAttribute("statuses", TICKET_STATUSES);
+            model.addAttribute("body", "/admin/support.jsp");
+            return "admin/layout/main";
+        } catch (Exception e) {
+            model.addAttribute("error", "Không thể tải danh sách hỗ trợ.");
+            model.addAttribute("statuses", TICKET_STATUSES);
+            model.addAttribute("body", "/admin/support.jsp");
+            return "admin/layout/main";
+        }
     }
 }

@@ -22,23 +22,36 @@ public class OrderService {
     public int createOrder(int userId, String customerName, String phone,
             String address, List<CartItem> cart) {
 
-        double total = calculateTotal(cart);
+        try {
+            if (userId <= 0 || cart == null || cart.isEmpty()) {
+                return 0;
+            }
 
-        return orderDAO.createOrder(
-                userId,
-                customerName,
-                phone,
-                address,
-                total,
-                cart
-        );
+            double total = calculateTotal(cart);
+
+            return orderDAO.createOrder(
+                    userId,
+                    customerName,
+                    phone,
+                    address,
+                    total,
+                    cart
+            );
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     // Tính tổng tiền
     public double calculateTotal(List<CartItem> cart) {
         double total = 0;
+        if (cart == null) {
+            return total;
+        }
         for (CartItem item : cart) {
-            total += item.getProduct().getPrice() * item.getQuantity();
+            if (item != null && item.getProduct() != null) {
+                total += item.getProduct().getPrice() * item.getQuantity();
+            }
         }
         return total;
     }
@@ -59,13 +72,24 @@ public class OrderService {
     }
 
     public Order getOrderById(int orderId) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        if (orderId <= 0) {
+            return null;
+        }
+        try {
+            return orderDAO.getOrderById(orderId);
+        } catch (Exception e) {
+            return null;
+        }
     }
     public boolean processPayment(int orderId, boolean success) {
-        if (success) {
-            return orderDAO.updatePaymentStatus(orderId, "PAID", "Đã xác nhận");
-        } else {
-            return orderDAO.updatePaymentStatus(orderId, "FAILED", "Đã hủy");
+        try {
+            if (success) {
+                return orderDAO.updatePaymentStatus(orderId, "PAID", "Đã xác nhận");
+            } else {
+                return orderDAO.updatePaymentStatus(orderId, "FAILED", "Đã hủy");
+            }
+        } catch (Exception e) {
+            return false;
         }
     }
 }

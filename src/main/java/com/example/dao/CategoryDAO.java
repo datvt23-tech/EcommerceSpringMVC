@@ -5,6 +5,7 @@
 package com.example.dao;
 
 import com.example.model.Category;
+import java.util.Collections;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -26,10 +27,14 @@ public class CategoryDAO {
 
         String sql = "SELECT * FROM category ORDER BY name";
 
-        return jdbcTemplate.query(
-                sql,
-                new BeanPropertyRowMapper<>(Category.class)
-        );
+        try {
+            return jdbcTemplate.query(
+                    sql,
+                    new BeanPropertyRowMapper<>(Category.class)
+            );
+        } catch (DataAccessException e) {
+            return Collections.emptyList();
+        }
     }
 
     public Category getById(int id) {

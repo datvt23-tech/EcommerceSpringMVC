@@ -29,7 +29,11 @@ public class OrderController {
     private OrderService orderService;
 
     private User getLoggedInUser(HttpSession session) {
-        return (User) session.getAttribute("LOGIN_USER");
+        try {
+            return (User) session.getAttribute("LOGIN_USER");
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private boolean hasRole(HttpSession session, String role) {
@@ -56,56 +60,71 @@ public class OrderController {
             @RequestParam("address") String address,
             HttpSession session,
             Model model) {
-        User user = getLoggedInUser(session);
-        if (user == null) {
-            session.setAttribute("REDIRECT_AFTER_LOGIN", "/cart");
-            return "redirect:/login";
-        }
-        if (canOperate(session)) {
-            return "redirect:/dashboard";
-        }
+        try {
+            User user = getLoggedInUser(session);
+            if (user == null) {
+                session.setAttribute("REDIRECT_AFTER_LOGIN", "/cart");
+                return "redirect:/login";
+            }
+            if (canOperate(session)) {
+                return "redirect:/dashboard";
+            }
 
-        List<CartItem> cart = (List<CartItem>) session.getAttribute("cart");
-        if (cart == null || cart.isEmpty()) {
-            model.addAttribute("error", "Giỏ hàng đang trống.");
+            List<CartItem> cart = (List<CartItem>) session.getAttribute("cart");
+            if (cart == null || cart.isEmpty()) {
+                session.setAttribute("cartError", "Giỏ hàng đang trống.");
+                return "redirect:/cart";
+            }
+
+            int orderId = orderService.createOrder(user.getId(), customerName, phone, address, cart);
+            if (orderId <= 0) {
+                session.setAttribute("cartError", "Không thể tạo đơn hàng. Vui lòng thử lại.");
+                return "redirect:/cart";
+            }
+            session.removeAttribute("cart");
+            return "redirect:/orders";
+        } catch (Exception e) {
+            session.setAttribute("cartError", "Đã xảy ra lỗi khi thanh toán giỏ hàng.");
             return "redirect:/cart";
         }
-
-        double total = 0;
-        for (CartItem item : cart) {
-            total += item.getProduct().getPrice() * item.getQuantity();
-        }
-
-        orderService.createOrder(user.getId(), customerName, phone, address, cart);
-        session.removeAttribute("cart");
-        return "redirect:/orders";
     }
 
     @GetMapping("/orders")
     public String myOrders(HttpSession session, Model model) {
-        User user = getLoggedInUser(session);
-        if (user == null) {
-            return "redirect:/login";
+        try {
+            User user = getLoggedInUser(session);
+            if (user == null) {
+                return "redirect:/login";
+            }
+            if (canOperate(session)) {
+                return "redirect:/dashboard";
+            }
+            model.addAttribute("orders", orderService.getOrdersByUserId(user.getId()));
+            model.addAttribute("body", "/customer/orders.jsp");
+            return "layout/main";
+        } catch (Exception e) {
+            model.addAttribute("error", "Không thể tải danh sách đơn hàng.");
+            model.addAttribute("body", "/customer/orders.jsp");
+            return "layout/main";
         }
-        if (canOperate(session)) {
-            return "redirect:/dashboard";
-        }
-
-        model.addAttribute("orders", orderService.getOrdersByUserId(user.getId()));
-        model.addAttribute("body", "/customer/orders.jsp");
-        return "layout/main";
     }
 
     @GetMapping("/staff/orders")
     public String staffOrders(HttpSession session, Model model) {
-        if (!canOperate(session)) {
-            return getLoggedInUser(session) == null ? "redirect:/login" : "redirect:/";
+        try {
+            if (!canOperate(session)) {
+                return getLoggedInUser(session) == null ? "redirect:/login" : "redirect:/";
+            }
+            model.addAttribute("orders", orderService.getAllOrders());
+            model.addAttribute("statuses", ORDER_STATUSES);
+            model.addAttribute("body", "/staff/orders.jsp");
+            return "staff/layout/main";
+        } catch (Exception e) {
+            model.addAttribute("error", "Không thể tải danh sách đơn hàng.");
+            model.addAttribute("statuses", ORDER_STATUSES);
+            model.addAttribute("body", "/staff/orders.jsp");
+            return "staff/layout/main";
         }
-
-        model.addAttribute("orders", orderService.getAllOrders());
-        model.addAttribute("statuses", ORDER_STATUSES);
-        model.addAttribute("body", "/staff/orders.jsp");
-        return "staff/layout/main";
     }
 
     @PostMapping("/staff/orders/update-status")
@@ -113,30 +132,41 @@ public class OrderController {
             @RequestParam("status") String status,
             HttpSession session,
             Model model) {
-        if (!canOperate(session)) {
-            return getLoggedInUser(session) == null ? "redirect:/login" : "redirect:/";
-        }
-        if (!isAllowedStatus(status)) {
-            model.addAttribute("error", "Trạng thái đơn hàng không hợp lệ.");
+        try {
+            if (!canOperate(session)) {
+                return getLoggedInUser(session) == null ? "redirect:/login" : "redirect:/";
+            }
+            if (!isAllowedStatus(status)) {
+                model.addAttribute("error", "Trạng thái đơn hàng không hợp lệ.");
+                return staffOrders(session, model);
+            }
+            if (orderService.updateOrderStatus(id, status)) {
+                model.addAttribute("success", "Cập nhật trạng thái đơn hàng thành công.");
+            } else {
+                model.addAttribute("error", "Không thể cập nhật trạng thái đơn hàng.");
+            }
+            return staffOrders(session, model);
+        } catch (Exception e) {
+            model.addAttribute("error", "Đã xảy ra lỗi khi cập nhật đơn hàng.");
             return staffOrders(session, model);
         }
-
-        if (orderService.updateOrderStatus(id, status)) {
-            model.addAttribute("success", "Cập nhật trạng thái đơn hàng thành công.");
-        } else {
-            model.addAttribute("error", "Không thể cập nhật trạng thái đơn hàng.");
-        }
-        return staffOrders(session, model);
     }
+
     @GetMapping("/admin/orders")
     public String adminOrders(HttpSession session, Model model) {
-        if (!canOperate(session)) {
-            return getLoggedInUser(session) == null ? "redirect:/login" : "redirect:/";
+        try {
+            if (!canOperate(session)) {
+                return getLoggedInUser(session) == null ? "redirect:/login" : "redirect:/";
+            }
+            model.addAttribute("orders", orderService.getAllOrders());
+            model.addAttribute("statuses", ORDER_STATUSES);
+            model.addAttribute("body", "/admin/orders.jsp");
+            return "admin/layout/main";
+        } catch (Exception e) {
+            model.addAttribute("error", "Không thể tải danh sách đơn hàng.");
+            model.addAttribute("statuses", ORDER_STATUSES);
+            model.addAttribute("body", "/admin/orders.jsp");
+            return "admin/layout/main";
         }
-
-        model.addAttribute("orders", orderService.getAllOrders());
-        model.addAttribute("statuses", ORDER_STATUSES);
-        model.addAttribute("body", "/admin/orders.jsp");
-        return "admin/layout/main";
     }
 }

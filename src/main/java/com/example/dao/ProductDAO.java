@@ -8,7 +8,9 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.List;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 
 /**
@@ -44,7 +46,11 @@ public class ProductDAO {
                 + "FROM product p\n"
                 + "LEFT JOIN category c\n"
                 + "ON p.category_id = c.id";
-        return jdbcTemplate.query(sql, productRowMapper);
+        try {
+            return jdbcTemplate.query(sql, productRowMapper);
+        } catch (DataAccessException e) {
+            return Collections.emptyList();
+        }
     }
 
     // 2. Tìm kiếm một sản phẩm dựa vào ID (Có try-catch an toàn)
@@ -55,7 +61,7 @@ public class ProductDAO {
                 + "WHERE p.id = ?";
         try {
             return jdbcTemplate.queryForObject(sql, productRowMapper, id);
-        } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+        } catch (DataAccessException e) {
             // Trả về null nếu không tìm thấy ID sản phẩm trong DB thay vì làm sập ứng dụng
 
             return null;
@@ -65,35 +71,47 @@ public class ProductDAO {
     // 3. Thêm sản phẩm mới (Trả về true nếu thêm thành công)
     public boolean insert(Product product) {
         String sql = "INSERT INTO product (name, price, description, image_url, category_id) VALUES (?, ?, ?, ?, ?)";
-        int rowsAffected = jdbcTemplate.update(sql,
-                product.getName(),
-                product.getPrice(),
-                product.getDescription(),
-                product.getImageUrl(),
-                product.getCategoryId()
-        );
-        return rowsAffected > 0;
+        try {
+            int rowsAffected = jdbcTemplate.update(sql,
+                    product.getName(),
+                    product.getPrice(),
+                    product.getDescription(),
+                    product.getImageUrl(),
+                    product.getCategoryId()
+            );
+            return rowsAffected > 0;
+        } catch (DataAccessException e) {
+            return false;
+        }
     }
 
     // 4. Xóa sản phẩm (Trả về true nếu xóa thành công)
     public boolean delete(int id) {
         String sql = "DELETE FROM product WHERE id = ?";
-        int rowsAffected = jdbcTemplate.update(sql, id);
-        return rowsAffected > 0;
+        try {
+            int rowsAffected = jdbcTemplate.update(sql, id);
+            return rowsAffected > 0;
+        } catch (DataAccessException e) {
+            return false;
+        }
     }
 
     // 5. Cập nhật thông tin sản phẩm (Đã bổ sung sửa cả ảnh image_url)
     public boolean update(Product product) {
         String sql = "UPDATE product SET name = ?, price = ?, description = ?, image_url = ?, category_id = ? WHERE id = ?";
-        int rowsAffected = jdbcTemplate.update(sql,
-                product.getName(),
-                product.getPrice(),
-                product.getDescription(),
-                product.getImageUrl(), // Bổ sung cập nhật ảnh để không bị mất link ảnh cũ
-                product.getCategoryId(),
-                product.getId()
-        );
-        return rowsAffected > 0;
+        try {
+            int rowsAffected = jdbcTemplate.update(sql,
+                    product.getName(),
+                    product.getPrice(),
+                    product.getDescription(),
+                    product.getImageUrl(), // Bổ sung cập nhật ảnh để không bị mất link ảnh cũ
+                    product.getCategoryId(),
+                    product.getId()
+            );
+            return rowsAffected > 0;
+        } catch (DataAccessException e) {
+            return false;
+        }
     }
 
     public List<Product> searchByName(String keyword) {
@@ -101,7 +119,11 @@ public class ProductDAO {
                 + "FROM product p "
                 + "LEFT JOIN category c ON p.category_id = c.id "
                 + "WHERE p.name LIKE ?";
-        return jdbcTemplate.query(sql, productRowMapper, "%" + keyword + "%");
+        try {
+            return jdbcTemplate.query(sql, productRowMapper, "%" + keyword + "%");
+        } catch (DataAccessException e) {
+            return Collections.emptyList();
+        }
     }
 
     public List<Product> getProductsByCategory(int categoryId) {
@@ -115,18 +137,26 @@ public class ProductDAO {
                 + "LEFT JOIN category c ON p.category_id=c.id "
                 + "WHERE p.category_id=?";
 
-        return jdbcTemplate.query(
-                sql,
-                productRowMapper,
-                categoryId);
+        try {
+            return jdbcTemplate.query(
+                    sql,
+                    productRowMapper,
+                    categoryId);
+        } catch (DataAccessException e) {
+            return Collections.emptyList();
+        }
     }
 
     public List<Product> getFeaturedProducts() {
         String sql = "SELECT * FROM product WHERE featured = true";
-        return jdbcTemplate.query(
-                sql,
-                new BeanPropertyRowMapper<>(Product.class)
-        );
+        try {
+            return jdbcTemplate.query(
+                    sql,
+                    new BeanPropertyRowMapper<>(Product.class)
+            );
+        } catch (DataAccessException e) {
+            return Collections.emptyList();
+        }
     }
 
     public boolean updateFeatured(int id, boolean featured) {
@@ -134,6 +164,10 @@ public class ProductDAO {
         String sql
                 = "UPDATE product SET featured = ? WHERE id = ?";
 
-        return jdbcTemplate.update(sql, featured, id) > 0;
+        try {
+            return jdbcTemplate.update(sql, featured, id) > 0;
+        } catch (DataAccessException e) {
+            return false;
+        }
     }
 }

@@ -38,20 +38,26 @@ public class UserService {
             return "ERROR";
         }
 
-        if (!user.getPassword().equals(confirmPassword)) {
-            return "PASSWORD_NOT_MATCH";
+        try {
+            if (user.getPassword() == null || !user.getPassword().equals(confirmPassword)) {
+                return "PASSWORD_NOT_MATCH";
+            }
+
+            if (userDAO.existsByUsername(user.getUsername())) {
+                return "USERNAME_EXISTS";
+            }
+
+            if (user.getRole() == null || user.getRole().trim().isEmpty()) {
+                user.setRole("CUSTOMER");
+            }
+            user.setActive(true);
+
+            boolean ok = userDAO.registerUser(user);
+
+            return ok ? "SUCCESS" : "ERROR";
+        } catch (Exception e) {
+            return "ERROR";
         }
-
-        if (userDAO.existsByUsername(user.getUsername())) {
-            return "USERNAME_EXISTS";
-        }
-
-        user.setRole("CUSTOMER");
-        user.setActive(true);
-
-        boolean ok = userDAO.registerUser(user);
-
-        return ok ? "SUCCESS" : "ERROR";
     }
 
     // 3. Logic Khôi phục mật khẩu
@@ -61,18 +67,22 @@ public class UserService {
             return "USER_NOT_FOUND";
         }
 
-        if (!newPassword.equals(confirmNewPassword)) {
-            return "PASSWORD_NOT_MATCH";
+        try {
+            if (newPassword == null || !newPassword.equals(confirmNewPassword)) {
+                return "PASSWORD_NOT_MATCH";
+            }
+
+            User user = userDAO.findByUsername(username);
+            if (user == null) {
+                return "USER_NOT_FOUND";
+            }
+
+            boolean ok = userDAO.updatePassword(username, newPassword);
+
+            return ok ? "SUCCESS" : "ERROR";
+        } catch (Exception e) {
+            return "ERROR";
         }
-
-        User user = userDAO.findByUsername(username);
-        if (user == null) {
-            return "USER_NOT_FOUND";
-        }
-
-        boolean ok = userDAO.updatePassword(username, newPassword);
-
-        return ok ? "SUCCESS" : "ERROR";
 
     }
 
@@ -98,7 +108,11 @@ public class UserService {
 
         user.setActive(true);
 
-        return userDAO.createUser(user);
+        try {
+            return userDAO.createUser(user);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
 }

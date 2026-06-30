@@ -5,8 +5,10 @@
 package com.example.dao;
 
 import com.example.model.User;
+import java.util.Collections;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -69,7 +71,11 @@ public class UserDAO {
 
     public List<User> getAllUsers() {
         String sql = "SELECT * FROM users ORDER BY role, username";
-        return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(User.class));
+        try {
+            return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(User.class));
+        } catch (DataAccessException e) {
+            return Collections.emptyList();
+        }
     }
 
     public boolean updateUserRole(int id, String role) {
@@ -105,8 +111,12 @@ public class UserDAO {
     //  check trùng username
     public boolean existsByUsername(String username) {
         String sql = "SELECT COUNT(*) FROM users WHERE username = ?";
-        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, username);
-        return count != null && count > 0;
+        try {
+            Integer count = jdbcTemplate.queryForObject(sql, Integer.class, username);
+            return count != null && count > 0;
+        } catch (DataAccessException e) {
+            return false;
+        }
     }
 
     public boolean createUser(User user) {

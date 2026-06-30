@@ -1,14 +1,16 @@
 package com.example.dao;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 /**
  * DAO thuc hien cac truy van thong ke bao cao doanh thu.
- * Moi phuong thuc tuong ung voi mot widget/bieu do tren trang Admin Report.
  *
  * @author trinhthuytrang
  */
@@ -18,12 +20,6 @@ public class ReportDAO {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    /**
-     * Lay bo so lieu tong hop tu bang orders:
-     * tong doanh thu tat ca thoi gian, doanh thu thang nay, doanh thu hom nay,
-     * tong so don, so don da thanh toan, so don da huy.
-     * Chi tinh doanh thu tu cac don co payment_status = 'PAID'.
-     */
     public Map<String, Object> getSummaryStats() {
         String sql = "SELECT "
                 + "COALESCE(SUM(CASE WHEN payment_status = 'PAID' THEN total_amount ELSE 0 END), 0) AS totalRevenue, "
@@ -36,28 +32,26 @@ public class ReportDAO {
                 + "SUM(CASE WHEN payment_status = 'PAID' THEN 1 ELSE 0 END) AS paidOrders, "
                 + "SUM(CASE WHEN status = 'Da huy' THEN 1 ELSE 0 END) AS cancelledOrders "
                 + "FROM orders";
-        return jdbcTemplate.queryForMap(sql);
+        try {
+            return jdbcTemplate.queryForMap(sql);
+        } catch (DataAccessException e) {
+            return new HashMap<>();
+        }
     }
 
-    /**
-     * Lay thong ke khach hang:
-     * tong so CUSTOMER, so khach moi dang ky trong thang nay,
-     * so khach da tung dat don thanh cong (active).
-     */
     public Map<String, Object> getCustomerStats() {
         String sql = "SELECT "
                 + "(SELECT COUNT(*) FROM users WHERE role = 'CUSTOMER') AS totalCustomers, "
                 + "(SELECT COUNT(*) FROM users WHERE role = 'CUSTOMER' "
                 + "  AND YEAR(created_at) = YEAR(NOW()) AND MONTH(created_at) = MONTH(NOW())) AS newThisMonth, "
                 + "(SELECT COUNT(DISTINCT user_id) FROM orders WHERE payment_status = 'PAID') AS activeCustomers";
-        return jdbcTemplate.queryForMap(sql);
+        try {
+            return jdbcTemplate.queryForMap(sql);
+        } catch (DataAccessException e) {
+            return new HashMap<>();
+        }
     }
 
-    /**
-     * Lay doanh thu 6 thang gan nhat, nhom theo thang (dinh dang YYYY-MM).
-     * Chi tinh don co payment_status = 'PAID'.
-     * Ket qua sap xep tang dan theo thang de ve bieu do duong.
-     */
     public List<Map<String, Object>> getMonthlyRevenue() {
         String sql = "SELECT DATE_FORMAT(created_at, '%Y-%m') AS month, "
                 + "COALESCE(SUM(total_amount), 0) AS revenue, "
@@ -67,15 +61,13 @@ public class ReportDAO {
                 + "  AND created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH) "
                 + "GROUP BY DATE_FORMAT(created_at, '%Y-%m') "
                 + "ORDER BY month ASC";
-        return jdbcTemplate.queryForList(sql);
+        try {
+            return jdbcTemplate.queryForList(sql);
+        } catch (DataAccessException e) {
+            return Collections.emptyList();
+        }
     }
 
-    /**
-     * Lay top san pham ban chay nhat dua tren tong so luong da ban.
-     * Chi tinh don co payment_status = 'PAID'.
-     *
-     * @param limit so luong san pham toi da can tra ve
-     */
     public List<Map<String, Object>> getTopProducts(int limit) {
         String sql = "SELECT oi.product_name AS productName, "
                 + "SUM(oi.quantity) AS totalQty, "
@@ -86,23 +78,22 @@ public class ReportDAO {
                 + "GROUP BY oi.product_name "
                 + "ORDER BY totalQty DESC "
                 + "LIMIT ?";
-        return jdbcTemplate.queryForList(sql, limit);
+        try {
+            return jdbcTemplate.queryForList(sql, limit);
+        } catch (DataAccessException e) {
+            return Collections.emptyList();
+        }
     }
 
-    /**
-     * Lay so luong don hang theo tung trang thai (Vi du: Cho xu ly, Dang giao,...).
-     * Sap xep giam dan theo so luong de hien thi trang thai pho bien nhat len dau.
-     */
     public List<Map<String, Object>> getOrderStatusBreakdown() {
         String sql = "SELECT status, COUNT(*) AS cnt FROM orders GROUP BY status ORDER BY cnt DESC";
-        return jdbcTemplate.queryForList(sql);
+        try {
+            return jdbcTemplate.queryForList(sql);
+        } catch (DataAccessException e) {
+            return Collections.emptyList();
+        }
     }
 
-    /**
-     * Lay danh sach don hang gan nhat kem thong tin khach hang.
-     *
-     * @param limit so don hang toi da can tra ve
-     */
     public List<Map<String, Object>> getRecentOrders(int limit) {
         String sql = "SELECT o.id, o.customer_name AS customerName, "
                 + "o.total_amount AS totalAmount, o.status, "
@@ -112,6 +103,10 @@ public class ReportDAO {
                 + "FROM orders o "
                 + "JOIN users u ON o.user_id = u.id "
                 + "ORDER BY o.created_at DESC LIMIT ?";
-        return jdbcTemplate.queryForList(sql, limit);
+        try {
+            return jdbcTemplate.queryForList(sql, limit);
+        } catch (DataAccessException e) {
+            return Collections.emptyList();
+        }
     }
 }

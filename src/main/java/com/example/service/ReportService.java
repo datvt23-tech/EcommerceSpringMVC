@@ -1,6 +1,8 @@
 package com.example.service;
 
 import com.example.dao.ReportDAO;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,17 +23,29 @@ public class ReportService {
 
     /** Tra ve bo so lieu tong hop: tong doanh thu, doanh thu thang/hom nay, so don hang. */
     public Map<String, Object> getSummaryStats() {
-        return reportDAO.getSummaryStats();
+        try {
+            return reportDAO.getSummaryStats();
+        } catch (Exception e) {
+            return new HashMap<>();
+        }
     }
 
     /** Tra ve thong ke khach hang: tong so, moi trong thang, dang hoat dong. */
     public Map<String, Object> getCustomerStats() {
-        return reportDAO.getCustomerStats();
+        try {
+            return reportDAO.getCustomerStats();
+        } catch (Exception e) {
+            return new HashMap<>();
+        }
     }
 
     /** Tra ve danh sach doanh thu theo thang trong 6 thang gan nhat. */
     public List<Map<String, Object>> getMonthlyRevenue() {
-        return reportDAO.getMonthlyRevenue();
+        try {
+            return reportDAO.getMonthlyRevenue();
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
     }
 
     /**
@@ -40,12 +54,20 @@ public class ReportService {
      * @param limit so luong san pham toi da can lay
      */
     public List<Map<String, Object>> getTopProducts(int limit) {
-        return reportDAO.getTopProducts(limit);
+        try {
+            return reportDAO.getTopProducts(limit);
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
     }
 
     /** Tra ve so luong don hang theo tung trang thai (dung cho bieu do Doughnut). */
     public List<Map<String, Object>> getOrderStatusBreakdown() {
-        return reportDAO.getOrderStatusBreakdown();
+        try {
+            return reportDAO.getOrderStatusBreakdown();
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
     }
 
     /**
@@ -54,7 +76,11 @@ public class ReportService {
      * @param limit so don hang toi da can lay
      */
     public List<Map<String, Object>> getRecentOrders(int limit) {
-        return reportDAO.getRecentOrders(limit);
+        try {
+            return reportDAO.getRecentOrders(limit);
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
     }
 
     /**
@@ -65,6 +91,9 @@ public class ReportService {
      */
     public String buildChartLabels(List<Map<String, Object>> rows, String key) {
         StringBuilder sb = new StringBuilder();
+        if (rows == null) {
+            return "";
+        }
         for (int i = 0; i < rows.size(); i++) {
             if (i > 0) sb.append(",");
             sb.append("'").append(rows.get(i).get(key)).append("'");
@@ -81,6 +110,9 @@ public class ReportService {
      */
     public String buildChartData(List<Map<String, Object>> rows, String key) {
         StringBuilder sb = new StringBuilder();
+        if (rows == null) {
+            return "";
+        }
         for (int i = 0; i < rows.size(); i++) {
             if (i > 0) sb.append(",");
             Object val = rows.get(i).get(key);

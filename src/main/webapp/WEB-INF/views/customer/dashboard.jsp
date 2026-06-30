@@ -27,8 +27,8 @@
         <div class="col-md-4">
             <div class="card h-100 shadow-sm border-0">
                 <div class="card-body">
-                    <h5 class="fw-bold">Bảo hành và đổi trả</h5>
-                    <p class="text-muted">Quản lý thông tin bảo hành điện tử cho thiết bị.</p>
+                    <h5 class="fw-bold">Hỗ trợ</h5>
+                    <p class="text-muted">Hỗ trợ thông tin bảo hành điện tử cho thiết bị.</p>
                     <a href="${pageContext.request.contextPath}/support" class="btn btn-dark btn-sm">Gửi yêu cầu</a>
                 </div>
             </div>

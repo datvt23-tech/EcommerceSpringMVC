@@ -56,11 +56,7 @@
 
                 <i class="bi bi-cart3 fs-4 text-white"></i>
 
-                <!-- Badge số lượng -->
-                <span class="position-absolute top-0 start-100 translate-middle
-                      badge rounded-pill bg-danger">
-                    ${cartSize}
-                </span>
+                
             </a>
             <c:if test="${not empty sessionScope.LOGIN_USER}">
                 <a class="nav-link fw-bold text-primary" href="${pageContext.request.contextPath}/customer/dashboard">

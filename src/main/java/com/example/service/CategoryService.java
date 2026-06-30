@@ -6,6 +6,7 @@ package com.example.service;
 
 import com.example.dao.CategoryDAO;
 import com.example.model.Category;
+import java.util.Collections;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,10 +22,18 @@ public class CategoryService {
     private CategoryDAO categoryDAO;
 
     public List<Category> getAllCategories() {
-        return categoryDAO.getAllCategories();
+        try {
+            return categoryDAO.getAllCategories();
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
     }
 
     public Category getById(int id) {
-        return categoryDAO.getById(id);
+        try {
+            return categoryDAO.getById(id);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
