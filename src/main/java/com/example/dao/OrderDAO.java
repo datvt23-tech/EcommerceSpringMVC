@@ -90,7 +90,6 @@ public class OrderDAO {
         }
     }
 
-
     public Order getOrderById(int orderId) {
         String sql = "SELECT * FROM orders WHERE id = ?";
         try {
@@ -132,5 +131,28 @@ public class OrderDAO {
                 order.setItems(Collections.emptyList());
             }
         }
+    }
+
+    public List<Order> getLatestOrders() {
+
+        String sql
+                = "SELECT * FROM orders "
+                + "ORDER BY id DESC "
+                + "LIMIT 5";
+
+        return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(Order.class));
+    }
+
+    public boolean cancelOrder(int id) {
+
+        String sql = 
+        "UPDATE orders"+
+        "SET status = 'CANCELLED'"+
+        "WHERE id = ?"+
+        "AND status = 'PENDING'"+
+        "AND payment_status = 'PENDING'"
+        ;
+
+        return jdbcTemplate.update(sql, id) > 0;
     }
 }

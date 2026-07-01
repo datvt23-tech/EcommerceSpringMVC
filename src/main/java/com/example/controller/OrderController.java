@@ -9,6 +9,7 @@ package com.example.controller;
  * @author votandat
  */
 import com.example.model.CartItem;
+import com.example.model.Order;
 import com.example.model.User;
 import com.example.service.OrderService;
 import java.util.List;
@@ -17,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -169,4 +171,56 @@ public class OrderController {
             return "admin/layout/main";
         }
     }
+
+    @PostMapping("/orders/cancel/{id}")
+    public String cancelOrder(@PathVariable int id,
+            HttpSession session,
+            Model model) {
+
+        try {
+
+            User user = (User) session.getAttribute("LOGIN_USER");
+
+            if (user == null) {
+                return "redirect:/login";
+            }
+
+            Order order = orderService.getOrderById(id);
+
+            if (order == null) {
+                return "redirect:/orders";
+            }
+
+            // Không cho hủy đơn của người khác
+            if (order.getUserId() != user.getId()) {
+                return "redirect:/orders";
+            }
+
+            // Chỉ cho hủy khi chưa thanh toán và đang chờ xử lý
+            if (!"PENDING".equals(order.getStatus())
+                    || !"PENDING".equals(order.getPaymentStatus())) {
+
+                return "redirect:/orders";
+            }
+
+            boolean success = orderService.cancelOrder(id);
+
+            if (!success) {
+                model.addAttribute("error",
+                        "Không thể hủy đơn hàng.");
+            }
+
+            return "redirect:/orders";
+
+        } catch (Exception e) {
+
+            e.printStackTrace(); // Debug
+
+            model.addAttribute("error",
+                    "Đã xảy ra lỗi khi hủy đơn hàng.");
+
+            return "redirect:/orders";
+        }
+    }
+
 }

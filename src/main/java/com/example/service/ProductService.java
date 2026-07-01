@@ -101,4 +101,11 @@ public class ProductService {
             return false;
         }
     }
+    public List<Product> getLatestProducts(){
+        try {
+            return productDAO.getLatestProducts();
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
+    }
 }

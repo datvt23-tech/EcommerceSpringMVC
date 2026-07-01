@@ -7,6 +7,7 @@ package com.example.service;
 import com.example.dao.OrderDAO;
 import com.example.model.CartItem;
 import com.example.model.Order;
+import java.util.Collections;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -81,6 +82,7 @@ public class OrderService {
             return null;
         }
     }
+
     public boolean processPayment(int orderId, boolean success) {
         try {
             if (success) {
@@ -88,6 +90,22 @@ public class OrderService {
             } else {
                 return orderDAO.updatePaymentStatus(orderId, "FAILED", "Đã hủy");
             }
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public List<Order> getLatestOrders() {
+        try {
+            return orderDAO.getLatestOrders();
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
+    }
+
+    public boolean cancelOrder(int id) {
+        try {
+            return orderDAO.cancelOrder(id);
         } catch (Exception e) {
             return false;
         }

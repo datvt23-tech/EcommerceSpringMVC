@@ -162,12 +162,27 @@ public class ProductDAO {
     public boolean updateFeatured(int id, boolean featured) {
 
         String sql
-                = "UPDATE product SET featured = ? WHERE id = ?";
+                = "SELECT p.*, c.name AS category_name "
+                + "FROM product p "
+                + "LEFT JOIN category c ON p.category_id = c.id "
+                + "WHERE p.featured = true";
 
         try {
             return jdbcTemplate.update(sql, featured, id) > 0;
         } catch (DataAccessException e) {
             return false;
         }
+    }
+
+    public List<Product> getLatestProducts() {
+
+        String sql
+                = "SELECT p.*, c.name AS category_name "
+                + "FROM product p "
+                + "LEFT JOIN category c ON p.category_id = c.id "
+                + "ORDER BY p.id DESC "
+                + "LIMIT 5";
+
+        return jdbcTemplate.query(sql, productRowMapper);
     }
 }

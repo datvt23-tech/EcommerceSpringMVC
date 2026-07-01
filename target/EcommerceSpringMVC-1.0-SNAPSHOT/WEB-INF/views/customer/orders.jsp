@@ -51,6 +51,53 @@
                                 <div class="text-end fw-bold text-danger">
                                     Tổng tiền: <fmt:formatNumber value="${order.totalAmount}" maxFractionDigits="0"/> VNĐ
                                 </div>
+                                <hr>
+                                <div class="row align-items-center">
+                                    <div class="col-md-6">
+                                        <strong>Payment Status:</strong>
+                                        <c:choose>
+                                            <c:when test="${order.paymentStatus == 'PAID'}">
+                                                <span class="badge bg-success">
+                                                    ✓ Paid
+                                                </span>
+                                            </c:when>
+                                            <c:when test="${order.paymentStatus == 'FAILED'}">
+                                                <span class="badge bg-danger">
+                                                    ✗ Failed
+                                                </span>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span class="badge bg-warning text-dark">
+                                                    Pending Payment
+                                                </span>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </div>
+                                    <div class="col-md-6 text-end">
+                                        <c:choose>
+                                            <c:when test="${order.paymentStatus == 'PAID'}">
+                                                <button class="btn btn-success" disabled>
+                                                    <i class="bi bi-check-circle"></i>
+                                                    Paid
+                                                </button>
+                                            </c:when>
+                                            <c:when test="${order.paymentStatus == 'FAILED'}">
+                                                <a href="${pageContext.request.contextPath}/payment/${order.id}"
+                                                   class="btn btn-danger">
+                                                    <i class="bi bi-credit-card"></i>
+                                                    Retry Payment
+                                                </a>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <a href="${pageContext.request.contextPath}/payment/${order.id}"
+                                                   class="btn btn-primary">
+                                                    <i class="bi bi-credit-card-2-front"></i>
+                                                    Pay Now
+                                                </a>
+                                            </c:otherwise>                                      
+                                        </c:choose>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

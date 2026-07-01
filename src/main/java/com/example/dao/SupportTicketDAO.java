@@ -51,4 +51,17 @@ public class SupportTicketDAO {
             return false;
         }
     }
+
+    public List<SupportTicket> getLatestTickets() {
+
+        String sql
+                = "SELECT * FROM support_tickets "
+                + "ORDER BY created_at DESC "
+                + "LIMIT 5";
+
+        return jdbcTemplate.query(
+                sql,
+                new BeanPropertyRowMapper<>(SupportTicket.class)
+        );
+    }
 }

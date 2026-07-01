@@ -85,11 +85,7 @@
                             </a>-->
         </nav>
 
-        <div class="sidebar-user">
-            <img class="avatar-img avatar-md sidebar-user-avatar" src="${pageContext.request.contextPath}/assets/images/avatar/avatar.jpg" alt="Admin ">
-            <strong>Staff</strong>
-            <small>Active Workspace</small>
-        </div>
+
 
         <div class="sidebar-footer">
             <span class="status-dot"></span>
@@ -138,7 +134,7 @@
 
                     <div class="dropdown">
                         <button class="profile-button dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <img class="avatar-img avatar-sm" src="${pageContext.request.contextPath}/assets/images/avatar/avatar.jpg" alt="Staff ">
+                            <img class="avatar-img avatar-sm" src="${pageContext.request.contextPath}/assets/images/avatar/avatar-1.jpg" alt="Staff ">
                             <span class="profile-name d-none d-sm-inline">Staff</span>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
@@ -151,7 +147,7 @@
                 </div>
             </div>
         </nav>
-
+        
 
 
 

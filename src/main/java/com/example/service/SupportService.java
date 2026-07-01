@@ -6,6 +6,7 @@ package com.example.service;
 
 import com.example.dao.SupportTicketDAO;
 import com.example.model.SupportTicket;
+import java.util.Collections;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -85,5 +86,12 @@ public class SupportService {
                 || "Đang xử lý".equals(status)
                 || "Đã phản hồi".equals(status)
                 || "Đã đóng".equals(status);
+    }
+    public List<SupportTicket> getLatestTickets(){
+        try {
+            return supportTicketDAO.getLatestTickets();
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
     }
 }

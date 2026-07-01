@@ -236,7 +236,7 @@
 <section class="featured-section">
 
     <h2 class="category-title">
-        ⭐ Sản phẩm nổi bật
+        Sản phẩm nổi bật
     </h2>
 
     <div class="container">
