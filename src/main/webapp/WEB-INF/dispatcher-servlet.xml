@@ -19,10 +19,15 @@
     </bean>
 
     <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
-        <property name="driverClassName" value="com.mysql.cj.jdbc.Driver" />
-        <property name="url" value="jdbc:mysql://localhost:3306/ecommerce_db?useSSL=false&amp;serverTimezone=UTC" />
-        <property name="username" value="root" />
-        <property name="password" value="15052005" /> </bean>
+        <property name="driverClassName" value="com.mysql.cj.jdbc.Driver"/>
+
+        <property name="url"
+                  value="jdbc:mysql://maglev.proxy.rlwy.net:42512/railway?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;serverTimezone=UTC"/>
+
+        <property name="username" value="root"/>
+
+        <property name="password" value="mShWcYPIJTEgQDqbMlESfXjOSwLXDOKm"/>
+    </bean>
 
     <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
         <property name="dataSource" ref="dataSource" />
